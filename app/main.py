@@ -50,6 +50,9 @@ def APIVersions(client, correlation_id): # 18
     )
     client.sendall( create_message(correlation_id, response_body=response_body) )
 
+def spawn_responder(client: socket.socket, addr):
+    while True:
+        client_handler(client, addr)
 
 def main():
     # You can use print statements as follows for debugging,
@@ -59,11 +62,10 @@ def main():
     # Uncomment this to pass the first stage
     server = socket.create_server(("localhost", 9092), reuse_port=True)
     
-    while True:
-        with concurrent.futures.ThreadPoolExecutor() as executor:
+    with concurrent.futures.ThreadPoolExecutor() as executor:
+        while True:
             client, addr = server.accept() # wait for client
-            while True:
-                executor.submit(client_handler, client, addr))
+            executor.submit(spawn_responder, client, addr)  
         
 
 if __name__ == "__main__":
