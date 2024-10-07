@@ -59,10 +59,12 @@ def main():
     # Uncomment this to pass the first stage
     server = socket.create_server(("localhost", 9092), reuse_port=True)
     
-    client, addr = server.accept() # wait for client
     while True:
-        client_handler(client, addr)
-    
+        with concurrent.futures.ThreadPoolExecutor() as executor:
+            client, addr = server.accept() # wait for client
+            while True:
+                executor.submit(client_handler, client, addr))
+        
 
 if __name__ == "__main__":
     main()
