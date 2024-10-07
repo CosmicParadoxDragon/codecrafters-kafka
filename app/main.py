@@ -5,8 +5,13 @@ def create_message(correlation_id):
     return len(id_bytes).to_bytes(4, byteorder='big') + id_bytes
 
 def client_handler(client, addr):
-    correlation_id = 7
-    data = client.recv(1024).decode()
+    data = client.recv(1024)
+    message_length = int.from_bytes(data[:4], byteorder='big')
+    request_api_key = int.from_bytes(data[4:6], byteorder='big')
+    request_api_version = int.from_bytes(data[6:8], byteorder='big')
+    correlation_id = int.from_bytes(data[8:12], byteorder='big')
+    # client_id
+    # tagged_fields
     print(data)
     client.sendall(create_message(correlation_id))
 
