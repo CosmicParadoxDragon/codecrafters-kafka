@@ -10,7 +10,7 @@ def main():
     #
     server = socket.create_server(("localhost", 9092), reuse_port=True)
     server.accept() # wait for client
-    data = server.recv(1024).decode()
+    data = server.recv(4096).decode()
     print(f"Received: {data}")
     correlation_id = int(7)
     
