@@ -1,9 +1,20 @@
 import socket  # noqa: F401
 
-def create_message(correlation_id, error_code=0):
+supported_api_keys = [18]
+
+def create_message(correlation_id, error_code=0, response_body=b''):
+    message = b''
     id_bytes = correlation_id.to_bytes(4, byteorder='big')
     error_code_bytes = error_code.to_bytes(2, byteorder='big')
-    return len(id_bytes + error_code_bytes).to_bytes(4, byteorder='big') + id_bytes + error_code_bytes
+
+    length = len(id_bytes + error_code_bytes) + len(response_body)
+    length_bytes = length.to_bytes(4, byteorder='big')
+
+    message = length_bytes + id_bytes + error_code_bytes + response_body
+    return message
+
+def version_check(request_api_version):
+    return request_api_version if request_api_version in [0, 1, 2, 3, 4] else False
 
 def client_handler(client, addr):
     data = client.recv(1024)
@@ -11,19 +22,33 @@ def client_handler(client, addr):
     request_api_key = int.from_bytes(data[4:6], byteorder='big')
     request_api_version = version_check(int.from_bytes(data[6:8], byteorder='big'))
     correlation_id = int.from_bytes(data[8:12], byteorder='big')
+    id_bytes = correlation_id.to_bytes(4, byteorder='big')
     if not request_api_version:
-        client.sendall(create_message(correlation_id=correlation_id, error_code=35))
+        client.sendall(create_message(correlation_id, error_code=35))
     # client_id
     # tagged_fields
     # print(data)
-    # match request_api_key:
-    #     case 18: APIVersions(client, )
-    #     case _: print("no version found")
+    match request_api_key:
+        case 18: APIVersions(client, correlation_id)
+        case _: client.sendall( create_message(correlation_id) )
     
-    client.sendall(create_message(correlation_id))
+def APIVersions(client, correlation_id): # 18             
+    tag_buffer = b'\00'
+    throttle_time_ms_bytes = int(0).to_bytes(4, byteorder='big')
+    min_ver = int(0).to_bytes(2, byteorder='big')
+    max_ver = int(4).to_bytes(2, byteorder='big')
+    
+    response_body = (
+        int(len(supported_api_keys) + 1).to_bytes(1)
+        + supported_api_keys[0].to_bytes(2, byteorder='big')
+        + min_ver
+        + max_ver
+        + tag_buffer
+        + throttle_time_ms_bytes
+        + tag_buffer
+    )
+    client.sendall( create_message(correlation_id, response_body=response_body) )
 
-def version_check(request_api_version):
-    return request_api_version if request_api_version in [0, 1, 2, 3, 4] else False
 
 def main():
     # You can use print statements as follows for debugging,
