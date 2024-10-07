@@ -15,7 +15,11 @@ def client_handler(client, addr):
         client.sendall(create_message(correlation_id=correlation_id, error_code=35))
     # client_id
     # tagged_fields
-    print(data)
+    # print(data)
+    # match request_api_key:
+    #     case 18: APIVersions(client, )
+    #     case _: print("no version found")
+    
     client.sendall(create_message(correlation_id))
 
 def version_check(request_api_version):
