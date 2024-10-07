@@ -1,5 +1,14 @@
 import socket  # noqa: F401
 
+def create_message(correlation_id):
+    id_bytes = correlation_id.to_bytes(4, byteorder='big')
+    return len(id_bytes).to_bytes(4, byteorder='big') + id_bytes
+
+def client_handler(client, addr):
+    correlation_id = 7
+    data = client.recv(1024).decode()
+    print(data)
+    client.sendall(create_message(correlation_id))
 
 def main():
     # You can use print statements as follows for debugging,
@@ -7,12 +16,11 @@ def main():
     print("Logs from your program will appear here!")
 
     # Uncomment this to pass the first stage
-    #
     server = socket.create_server(("localhost", 9092), reuse_port=True)
-    server.accept() # wait for client
-    data = server.recv(4096).decode()
-    print(f"Received: {data}")
-    correlation_id = int(7)
+    
+    while True:
+        client, addr = server.accept() # wait for client
+        client_handler(client, addr)
     
 
 if __name__ == "__main__":
