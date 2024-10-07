@@ -1,4 +1,5 @@
 import socket  # noqa: F401
+import concurrent.futures
 
 supported_api_keys = [18]
 
@@ -22,7 +23,7 @@ def client_handler(client, addr):
     request_api_key = int.from_bytes(data[4:6], byteorder='big')
     request_api_version = version_check(int.from_bytes(data[6:8], byteorder='big'))
     correlation_id = int.from_bytes(data[8:12], byteorder='big')
-    id_bytes = correlation_id.to_bytes(4, byteorder='big')
+
     if not request_api_version:
         client.sendall(create_message(correlation_id, error_code=35))
     # client_id
@@ -58,8 +59,8 @@ def main():
     # Uncomment this to pass the first stage
     server = socket.create_server(("localhost", 9092), reuse_port=True)
     
+    client, addr = server.accept() # wait for client
     while True:
-        client, addr = server.accept() # wait for client
         client_handler(client, addr)
     
 
